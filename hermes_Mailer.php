@@ -23,11 +23,33 @@ class hermes_Mailer
 		}else{
 			die("[".get_class($this)."::".__FUNCTION__."::".__LINE__."] No se puede crear el objeto");
 		}
-			
+		/*
+		$this->h_mail = new phpmailer();
+		$this->h_mail->PluginDir = ROOT_DIR_CONF."modulos/PHPMailer/";
+		$this->h_mail->Host     = "smtp.gmail.com";
+		$this->h_mail->Port		= 465;
+		$this->h_mail->Username = 'correo@gobalo.es';
+		$this->h_mail->Password = '77Gobalo77';
+		$this->h_mail->SMTPAuth = true;  // authentication enabled
+		$this->h_mail->SMTPSecure = 'ssl'; // secure transfer enabled REQUIRED for Gmail
+		$this->h_mail->Timeout = 50;
+		$this->h_mail->Mailer = "smtp";
+		$this->h_mail->IsSMTP();
+		$this->h_mail->IsHTML(true);
+		$this->h_mail->CharSet = "UTF-8";
+		$this->h_mail->SMTPDebug = 1;
+		$this->checkTimeMailer("[".get_class($this)."::".__FUNCTION__."::".__LINE__."] Construytendo la clase");
+		*/
+		
 		if(@!defined(MAILER_HOST))@define("MAILER_HOST","smtp.gobalo.com");
 		if(@!defined(MAILER_PORT))@define("MAILER_PORT",25);
 		if(@!defined(MAILER_USER))@define("MAILER_USER","test@gobalo.com");
 		if(@!defined(MAILER_PASS))@define("MAILER_PASS","366790");
+		/*if(!defined(MAILER_HOST))@define("MAILER_HOST","smtp.gobalo.com");
+		if(!defined(MAILER_PORT))@define("MAILER_PORT",25);
+		if(!defined(MAILER_USER))@define("MAILER_USER","test@gobalo.com");
+		if(!defined(MAILER_PASS))@define("MAILER_PASS","366790");*/
+		
 		$this->h_mail = new phpmailer();
 		$this->h_mail->PluginDir = ROOT_DIR_CONF."modulos/PHPMailer/";
 		$this->h_mail->Host     = MAILER_HOST;
@@ -141,6 +163,7 @@ class hermes_Mailer
 			$intentos++;
 		}
 		*/
+		$this->h_mail->ClearAddresses();
 		return $result;
 	}
 	/**
@@ -185,7 +208,7 @@ class hermes_Mailer
 		if($optional_title==''){
 			$optional_title="Error en código detectado";
 		}
-		$this->constructMail("no-reply@gobalo.com", "Reporte de error", "[AVISO] ".$optional_title." en ".$_SERVER ["HTTP_HOST"], $aviso_text, "", "no-reply@gobalo.com",true);
+		$this->constructMail(MAILER_USER, "Reporte de error", "[AVISO] ".$optional_title." en ".$_SERVER ["HTTP_HOST"], $aviso_text, "", MAILER_USER,true);
 		//$this->addAddress("info@gobalo.es");
 		//$this->addAddress("a.vara@gobalo.es");
 		$this->addAddress("support@gobalo.es");

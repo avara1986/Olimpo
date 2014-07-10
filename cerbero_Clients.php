@@ -5,7 +5,10 @@
  * @author Alberto Vara (C) Copyright 2012
  * @package gobalo.cerbero_Clients
  */
-
+if(APIS_GOOGLE){
+	require_once ROOT_DIR_WEB.'google_api/google-api-php-client/src/Google_Client.php';
+	require_once ROOT_DIR_WEB.'google_api/google-api-php-client/src/contrib/Google_DriveService.php';
+}
 class cerbero_Clients extends hidra_DB{
 	/**
 	 * $fields
@@ -17,6 +20,11 @@ class cerbero_Clients extends hidra_DB{
 	 * Campos que contendrá la tabla "cliente"
 	 */
 	public $fields = array();
+	/**
+	 * $encrypt
+	 * Campos que contendrá la tabla "cliente"
+	 */
+	public $encrypt = "sha1";	
 	/**
 	 * $field_user
 	 * Campo que contendrá el usuario de la tabla "cliente"
@@ -45,7 +53,17 @@ class cerbero_Clients extends hidra_DB{
 	 * $action
 	 * Variable que guarda la accion a realizar
 	 */
-	public $action_login = '';			
+	public $action_login = '';		
+	/**
+	 * $action
+	 * Objeto donde se instancia la clase de Google_Client
+	 */
+	public $AG_client="";
+	/**
+	 * $AG_service
+	 * Objeto donde se instancia la clase de Google_DriveService
+	 */
+	public $AG_service="";		
 	/**
 	 * loginClientAnonymous
 	 * Conectar como usuario anónimo
@@ -74,39 +92,118 @@ class cerbero_Clients extends hidra_DB{
 		$params=array();
 		$ok=false;
 		//echo "ENTRA1: ".$name." PASS".$password."<br>";
-		if($this->checkActions()){;
+		if($this->checkActions()){
 			switch ($this->action_login){	
 				case "USER":
-					$cond=$this->field_user." = LOWER(?) AND STATUS = '1'";
+					$cond=$this->field_user." = LOWER(?) AND VALIDATE = '1' AND STATUS = '1'";
 					$params[]=$name;					
 				break;
 				
 				case "USER_PASS":
-					$cond= $this->field_user." = LOWER(?) AND ".$this->field_pass." = (sha1(?)) AND STATUS = '1'";
+					
+					$cond= $this->field_user." = LOWER(?) AND ".$this->field_pass." = (".$this->encrypt."(?)) AND VALIDATE = '1' AND STATUS = '1'";
 					$params[]=$name;
 					$params[]=$password;						
-
+					//echo "ENTRA:".$cond."<br>".$password."<br>".$name."<br>";
 				break;
 				case "PASS":
-					$cond=$this->field_pass." = (sha1(?)) AND STATUS = '1'";
+					$cond=$this->field_pass." = (sha1(?)) AND VALIDATE = '1' AND STATUS = '1'";
 					$params[]=$password;					
 				break;			
 			}
-			//echo "ENTRA1: ".$name." PASS".$password."<br>";
-			//echo "FIELDS: ".$this->getClientFields()."<br>";
-			//echo "CONDS: ".$cond."<br>";
-			$result=$this->query('ID,'.$this->getClientFields(),$this->table."","",$cond,"",$params);
+			$session_failures=$this->getRequestSessionVar('l_fails');
+			$session_failures=0;
+			if($session_failures<3){
+				$result=$this->query($this->getClientFields(),$this->table."","",$cond,"",$params);
+				$num_result=count($result);
+				if($num_result==0){
+					if(strlen($session_failures)>0){
+						$session_failures++;
+						$this->assignSessionVar('l_fails',$session_failures);
+					}else{
+						$session_failures=1;
+						//echo "INTENTOS2: ".$session_failures."<br>";
+						$result=$this->assignSessionVar('l_fails',$session_failures);
+						if($result){
+							$session_failures=$this->getRequestSessionVar('l_fails');
+							//echo "INTENTOS3: ".$session_failures."<br>";
+						}
+					}
+					if($session_failures>=3){
+						$mensaje="Sobrepasados los intentos de inicio de sesión:<br/>
+						<b>Usuario:</b>".$name."<br>
+						<b>Pass:</b>".$password."<br>";
+						$result=$this->sendError($mensaje,WEB_URL,"Sobrepasados los límites de acceso");
+						$ok=false;
+						$this->setAction('I');
+						$this->addIUDTable(TABLE_BLACKLIST);
+						$this->addIUField('IP',$_SERVER ["REMOTE_ADDR"]);
+						$this->executeCommand();
+					}
+					$ok=false;
+					}elseif($num_result==1){
+							//$this->assignSessionVar('client_name', htmlentities($result[0][$this->fields_user_show]));
+							$this->assignSessionVar('client_name', htmlentities(utf8_decode($result[0][$this->fields_user_show])));
+							$this->assignSessionVar('client_id', $result[0]["ID"]);
+							$this->assignSessionVar('client_level', 2);
+							$this->assignCookieVar('client_id',$result[0]["ID"]);
+							$this->assignCookieVar('client_level', 2);
+							//echo "<br>OK<br>";
+							$ok=true;
+					}				
+			}
+		}
+		return $ok;
+	}	
+	/**
+	 * loginClientOpenID
+	 * Función para loguear con Gmail y OpenID
+	 * */	
+	function loginClientOpenID($email){
+		$params=array();
+		$ok=false;
+		$params[]=$email;
+		//$session_failures=$this->getRequestSessionVar('l_fails');
+		$session_failures=0;
+		$cond="LOWER(GOOGLE_ACCOUNT) = LOWER(?) AND STATUS = '1'";
+		if($session_failures<3){
+			$result=$this->query($this->getClientFields(),$this->table."","",$cond,"",$params);
 			$num_result=count($result);
-			//$this->showArray($result);
-			if($num_result>0){
-				$this->assignSessionVar('client_name', htmlentities($result[0][$this->fields_user_show]));
-				$this->assignSessionVar('client_id', $result[0]["ID"]);
-				$this->assignSessionVar('client_level', 1);
-				$this->assignCookieVar('client_id',$result[0]["ID"]);
-				$this->assignCookieVar('client_level', 1);
-				//echo "<br>OK<br>";
+			if($num_result==0){
+				if(strlen($session_failures)>0){
+					$session_failures++;
+					$this->assignSessionVar('l_fails',$session_failures);
+				}else{
+					$session_failures=1;
+					$result=$this->assignSessionVar('l_fails',$session_failures);
+					if($result){
+						$session_failures=$this->getRequestSessionVar('l_fails');
+					}
+				}
+				if($session_failures>=3){
+					$mensaje="Sobrepasados los intentos de inicio de sesión:<br/>
+					<b>Usuario:</b>".$email."<br>
+					<b>Pass:</b>".@$password."<br>";
+					$result=$this->sendError($mensaje,WEB_URL,"Sobrepasados los límites de acceso");
+					$ok=false;
+					$m_cms->setAction('I');
+					$m_cms->addIUDTable(TABLE_BLACKLIST);
+					$m_cms->addIUField('IP',$_SERVER ["REMOTE_ADDR"]);
+					$m_cms->executeCommand();
+				}
+				$ok=false;
+			}elseif($num_result==1){
+						$this->assignSessionVar('client_name', htmlentities(utf8_decode($result[0][$this->fields_user_show])));
+						$this->assignSessionVar('client_id', $result[0]["ID"]);
+						$this->assignSessionVar('client_level', 2);
+						$this->assignCookieVar('client_id',$result[0]["ID"]);
+						$this->assignCookieVar('client_level', 2);
 				$ok=true;
-			}		
+			}else{
+				$ok=false;
+			}
+		}else{
+			$ok=false;
 		}
 		return $ok;
 	}	
@@ -255,6 +352,9 @@ class cerbero_Clients extends hidra_DB{
      * asigna valores al array fields
      */
     function setClientFields($field){
+    	if(count($this->fields)==0 || !in_array("ID", $this->fields)){
+    		$this->fields[]="ID";
+    	}
     	if(strlen($field)>0){
     		$this->fields[]=$field;
     	}else{
@@ -291,7 +391,7 @@ class cerbero_Clients extends hidra_DB{
     		if($num_fields>0){
 	    		   for($i=0;$i<$num_fields;$i++){
 	    			if(($i+1)==$num_fields){
-	    				$sep="";
+	    				$sep=",";
 	    			}
 	    			$fields.=$sep.$this->fields[$i];
 	    			$sep=", ";
@@ -304,7 +404,16 @@ class cerbero_Clients extends hidra_DB{
     		return false;
     	}
 
-    }  
+    } 
+    /**
+     * setEncrypt
+     * asigna valores al array fields
+     */
+    function setEncrypt($encrypt){
+    	if($encrypt=='none'){
+    		$this->encrypt='';
+    	}    
+    }     
 	/**
 	 * setActionLogin
 	 * Define que tipo de query se va a construir
@@ -325,6 +434,100 @@ class cerbero_Clients extends hidra_DB{
 			$result=false;
 			
 		return $result;	
-	}        
+	}  
+	/**
+	 * checkLevelRol
+	 * Comprueba los niveles de seguridad del usuario conectado
+	 * @param $type
+	 */	
+	function checkLevelRol($lvlRol){
+		$ok=false;
+		if(strlen($lvlRol)>0){
+			$lvlUser=$this->getRequestSessionVar('client_level');
+			//echo "CERBERO ROL USER: ".$lvlUser."<br>";
+			//echo "CERBERO ROL CHECK: ".$lvlRol."<br>";
+			if(strlen($lvlUser)>0){
+				if($lvlUser>=$lvlRol){
+					$ok=true;
+				}				
+			}
+		}
+		return $ok;
+	}	   
+	/* METODOS de APIS de GOOGLE */
+	function initializeGoogleClient(){
+		$this->AG_client = new Google_Client();
+		// Get your credentials from the APIs Console
+		$this->AG_client->setClientId(AG_CLIENT);
+		$this->AG_client->setClientSecret(AG_SECRET);
+		$this->AG_client->setRedirectUri('https://www.export-accelerator.com/area_privada/exportacion_y_logistica');
+		$this->AG_client->setScopes(array(AG_SCOPES));		
+	}
+	function initializeGoogleService($code){
+		$this->AG_service = new Google_DriveService($this->AG_client);
+		//echo "CODE: ".$_GET['code']."<br>";
+		//echo "TEST: ".$_GET['test']."<br>";
+		//Request authorization
+		if (isset($code)&& strlen($code)>0) {
+		  //$client->authenticate($_GET['code']);
+		  //
+		  
+		  $authCode = trim(($code));
+		  $accessToken = $this->AG_client->authenticate($authCode);
+		  $this->AG_client->setAccessToken($accessToken);  
+		  $_SESSION['token'] = $this->AG_client->getAccessToken();
+		  //header('Location: http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF']);
+		}
+		if (isset($_SESSION['token'])) {
+		  $this->AG_client->setAccessToken($_SESSION['token']);
+		}
+	}	
+	function ap_setAccessToken(){
+		if(isset($_SESSION['token'])){
+			$this->AG_client->setAccessToken($_SESSION['token']);
+		}		
+	}
+	function ap_getFiles(){
+		if ($this->AG_client->getAccessToken()) {
+			$files=$this->ap_retrieveAllFiles($this->AG_service);
+			$_SESSION['token'] = $this->ap_existCon();
+		}else{
+			$files=false;
+		}
+		return $files;
+	}
+	function ap_createConURL(){
+		return $this->AG_client->createAuthUrl();
+	}	
+	function ap_existCon(){
+		return $this->AG_client->getAccessToken();
+	}
+	function ap_retrieveAllFiles($service) {
+		$result = array();
+		$pageToken = NULL;
+	
+		do {
+			try {
+				$parameters = array();
+				if ($pageToken) {
+					$parameters['pageToken'] = $pageToken;
+				}
+				$files = $service->files->listFiles($parameters);
+				 /*
+				echo "1<pre>";
+				print_r($files);
+				echo "</pre>";
+				*/
+				//$pageToken = $files->getNextPageToken();
+				return $files;
+				//$result = array_merge($result, $files->getItems());
+	
+			} catch (Exception $e) {
+				print "An error occurred: " . $e->getMessage();
+				$pageToken = NULL;
+			}
+		} while ($pageToken);
+		return $files;
+	}	
 }
 ?>

@@ -22,6 +22,7 @@ if (class_exists('hermes_Mailer')) {
 }else{
 	die("[OlimpoBaseSystem::".__LINE__."]hermes_Mailer no se ha definido");
 }
+//require_once(ROOT_DIR_CLASS."/interfaces/datesClass.php");
 class OlimpoBaseSystem {
 	/** *
 	 * h_mail
@@ -270,11 +271,11 @@ class OlimpoBaseSystem {
 		}
 		if($value==""){
 			//echo "BORRAR COOKIE: ".$name."<br>";
-			setcookie ($name, "", $time);
+			setcookie ($name, "", $time,'/');
 			unset($_COOKIE[$name]);
 		}elseif(strlen($name)>0 && isset($_COOKIE[$name])){
 			//echo "1 ASIGNAR COOKIE: ".$name." | VALUE: ".$value." | ".$_SERVER ["HTTP_HOST"]."<br>";
-			if(setcookie($name,$value,$time)){
+			if(setcookie($name,$value,$time,'/')){
 				$var=($_COOKIE[$name]);
 				//$this->showArray($_COOKIE);
 				//echo "class COOKIE: ".$var."<br>";			
@@ -285,7 +286,7 @@ class OlimpoBaseSystem {
 
 		}elseif(strlen($name)>0){
 			//echo "2 ASIGNAR COOKIE: ".$name."<br>";
-			setcookie($name,$value, $time);
+			setcookie($name,$value, $time,'/');
 		}else{
 			//echo "3ERRR<br>";
 			$var=false;
@@ -546,7 +547,7 @@ class OlimpoBaseSystem {
 			    	if($lang=='es'){
 			    		$dia_mes_text="Enero";
 			    	}elseif($lang=='pt'){
-			    		$dia_mes_text="janeiro";
+			    		$dia_mes_text="Janeiro";
 			    	}else{
 			    		$dia_mes_text="January";
 			    	}			    	
@@ -555,7 +556,7 @@ class OlimpoBaseSystem {
 					if($lang=='es'){
 			    		$dia_mes_text="Febrero";
 			    	}elseif($lang=='pt'){
-			    		$dia_mes_text="fevereiro";
+			    		$dia_mes_text="Fevereiro";
 			    	}else{
 			    		$dia_mes_text="February";
 			    	}
@@ -564,7 +565,7 @@ class OlimpoBaseSystem {
 					if($lang=='es'){
 			    		$dia_mes_text="Marzo";
 			    	}elseif($lang=='pt'){
-			    		$dia_mes_text="março";
+			    		$dia_mes_text="Março";
 			    	}else{
 			    		$dia_mes_text="March";
 			    	}
@@ -573,7 +574,7 @@ class OlimpoBaseSystem {
 					if($lang=='es'){
 			    		$dia_mes_text="Abril";
 			    	}elseif($lang=='pt'){
-			    		$dia_mes_text="abril";
+			    		$dia_mes_text="Abril";
 			    	}else{
 			    		$dia_mes_text="April";
 			    	}
@@ -582,7 +583,7 @@ class OlimpoBaseSystem {
 					if($lang=='es'){
 			    		$dia_mes_text="Mayo";
 			    	}elseif($lang=='pt'){
-			    		$dia_mes_text="maio";
+			    		$dia_mes_text="Maio";
 			    	}else{
 			    		$dia_mes_text="May";
 			    	}
@@ -591,7 +592,7 @@ class OlimpoBaseSystem {
 			    	if($lang=='es'){
 			    		$dia_mes_text="Junio";
 			    	}elseif($lang=='pt'){
-			    		$dia_mes_text="junho";
+			    		$dia_mes_text="Junho";
 			    	}else{
 			    		$dia_mes_text="June";
 			    	}			    	
@@ -600,7 +601,7 @@ class OlimpoBaseSystem {
 			    	if($lang=='es'){
 			    		$dia_mes_text="Julio";
 			    	}elseif($lang=='pt'){
-			    		$dia_mes_text="julho";
+			    		$dia_mes_text="Julho";
 			    	}else{
 			    		$dia_mes_text="July";
 			    	}			    	
@@ -609,7 +610,7 @@ class OlimpoBaseSystem {
 			    	if($lang=='es'){
 			    		$dia_mes_text="Agosto";
 			    	}elseif($lang=='pt'){
-			    		$dia_mes_text="agosto";
+			    		$dia_mes_text="Agosto";
 			    	}else{
 			    		$dia_mes_text="August";
 			    	}			    	
@@ -618,7 +619,7 @@ class OlimpoBaseSystem {
 			    	if($lang=='es'){
 			    		$dia_mes_text="Septiembre";
 			    	}elseif($lang=='pt'){
-			    		$dia_mes_text="setembro";
+			    		$dia_mes_text="Setembro";
 			    	}else{
 			    		$dia_mes_text="September";
 			    	}			    	
@@ -627,7 +628,7 @@ class OlimpoBaseSystem {
 			    	if($lang=='es'){
 			    		$dia_mes_text="Octubre";
 			    	}elseif($lang=='pt'){
-			    		$dia_mes_text="outubro";
+			    		$dia_mes_text="Outubro";
 			    	}else{
 			    		$dia_mes_text="October";
 			    	}			    	
@@ -637,7 +638,7 @@ class OlimpoBaseSystem {
 			    		$dia_mes_text="Noviembre";
 			    		
 			    	}elseif($lang=='pt'){
-			    		$dia_mes_text="novembro";
+			    		$dia_mes_text="Novembro";
 			    	}else{
 			    		$dia_mes_text="November";
 			    	}			    	
@@ -646,7 +647,7 @@ class OlimpoBaseSystem {
 				    if($lang=='es'){
 				    	$dia_mes_text="Diciembre";
 				    }elseif($lang=='pt'){
-			    		$dia_mes_text="dezembro";
+			    		$dia_mes_text="Dezembro";
 			    	}else{
 				    	$dia_mes_text="December";
 				    }			    
@@ -691,7 +692,7 @@ class OlimpoBaseSystem {
 	function formatNumbertoTPL($number,$num_dec=2) {
 		if(!is_numeric($number))$number='0';
 		else{
-			$number=number_format($number, $num_dec, ',', '.'); 
+			$number=number_format((float)$number, $num_dec, ',', '.'); 	
 		}
 		return $number;
 	}	
@@ -900,8 +901,10 @@ class OlimpoBaseSystem {
 	 *
 	 * Guarda las webs visitadas por un usuario
 	 */
-	function saveUserHistory(){
-		$id=$this->getRequestSessionVar('user_id');
+	function saveUserHistory($type='user'){
+		($type=='user')?$id=$this->getRequestSessionVar('user_id'):$id=$this->getRequestSessionVar('client_id');
+		//echo "TYPE: ".$type."<br>";
+		//echo "ID: ".$id."<br>";
 		$history=$this->getRequestSessionVar('user_history');
 		if(strlen($id)>0){
 			$next=$this->getNumUserHistoryPages($id);	
@@ -927,6 +930,7 @@ class OlimpoBaseSystem {
 	 */
 	function getNumUserHistoryPages($user_id){
 		$history=$this->getRequestSessionVar('user_history');
+		
 		$num_pages=0;
 		if(@is_array($history[$user_id])) $num_pages=count($history[$user_id]);
 		if(strlen($num_pages)==0) $num_pages=0;
@@ -937,8 +941,8 @@ class OlimpoBaseSystem {
 	 * 
 	 * Devuelve las últimas visitas del usuario
 	 */
-	function getUserHistory($format="array"){ 
-		$id=$this->getRequestSessionVar('user_id');
+	function getUserHistory($format="array",$type='user'){
+		($type=='user')?$id=$this->getRequestSessionVar('user_id'):$id=$this->getRequestSessionVar('client_id');
 		$history=$this->getRequestSessionVar('user_history');
 		if($format=="array"){
 			if(is_array($history[$id])){
@@ -1188,6 +1192,14 @@ class OlimpoBaseSystem {
 		$_SESSION["OS_".$this->token] = time();
 	}
 	/**
+	 * Get token.
+	 *
+	 * @access public
+	 */
+	function tokenGet() {
+		return $this->token;
+	}	
+	/**
 	 * Checks if the request have the right token set; after that, destroy the old tokens. Returns true if the request is ok, otherwise returns false.
 	 */
 	function tokenCheck($token) {
@@ -1224,13 +1236,73 @@ class OlimpoBaseSystem {
 	/**
 	 * Destroys all tokens except the new token.
 	 */
+	function tokenEvalError($error,$url="",$return='die',$alert=true) {
+		if($error==0){
+			return true;
+		}
+		$tokens_msg=array(	
+			1 =>	array(
+				"NAME"	=> 'ERROR_TOKEN_x00_OS_01',
+				"MSG"	=> 'No Request Token detected.'
+			),
+			2 =>	array(
+				"NAME"	=> 'ERROR_TOKEN_x00_OS_02',
+				"MSG"	=> 'No Session Token corrisponding to the Request Token.'
+			),
+			3 =>	array(
+				"NAME"	=> 'ERROR_TOKEN_x00_OS_03',
+				"MSG"	=> 'No value for the Session Token.'
+			),
+			4 =>	array(
+				"NAME"	=> 'ERROR_TOKEN_x00_OS_04',
+				"MSG"	=> 'Token reached the timeout'
+			),									
+		);
+		if($alert===true){
+			$errorText="ERROR EN TOKEN<br><b>Mensaje: </b>".$tokens_msg[$error]['MSG']."<br>Vars in Session:".print_r($_SESSION,true)."";
+			//basename($_SERVER['PHP_SELF']);
+			
+			$this->sendError($errorText,$url,"ERROR TOKEN ".$tokens_msg[$error]['NAME']);
+			
+		}
+		if($return=='die'){
+			die($tokens_msg[$error]['NAME']);
+		}
+	}	
+	/**
+	 * Destroys all tokens except the new token.
+	 */
 	function tokenDelAll() {
 		$sessvars = array_keys($_SESSION);
 		$tokens = array();
 		foreach ($sessvars as $var) if(substr_compare($var,"OS_",0,3)==0) $tokens[]=$var;
 		unset($tokens[array_search("OS_".$this->token,$tokens)]);
 		foreach ($tokens as $token) unset($_SESSION[$token]);
-	}		
-}
+	}	
+	/**
+	 * generates a random password, uses base64: 0-9a-zA-Z/+
+	 * @param int [optional] $length length of password, default 24 (144 Bit)
+	 * @return string password
+	 */
+	function generatePassword($length = 24) {
+        if(function_exists('openssl_random_pseudo_bytes')) {
+            $password = base64_encode(openssl_random_pseudo_bytes($length, $strong));
+            if($strong == TRUE)
+                return substr($password, 0, $length); //base64 is about 33% longer, so we need to truncate the result
+        }
+        
+        //fallback to mt_rand if php < 5.3 or no openssl available
+        $characters = '0123456789';
+        $characters .= 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/+'; 
+        $charactersLength = strlen($characters)-1;
+        $password = '';
 
+        //select some random characters
+        for ($i = 0; $i < $length; $i++) {
+            $password .= $characters[mt_rand(0, $charactersLength)];
+        }        
+        
+        return $password;
+	} 		
+}
 ?>

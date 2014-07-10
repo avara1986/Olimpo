@@ -95,29 +95,40 @@ class febe_Seller extends OlimpoBaseSystem{
 	 * $table_operations
 	 * Tabla donde guardar las transacciones
 	 */
-	private $table_operations = DEFAULT_TABLE_OP_PAYMENT;	
+	private $table_operations = TABLE_PAYMENT;	
 	/**
 	 * $client_session_name
 	 * Nombre de la variable de sesión donde se guarda el Identificador del cliente que está operando
 	 */
-	private $client_session_name = 'client_id';		
+	public $client_session_name = 'client_id';		
+	/**
+	 * $productName
+	 * Variable donde se inicialica Curl
+	 */
+	private $productName = "";	
+	/**
+	 * $productDesc
+	 * Variable donde se inicialica Curl
+	 */
+	private $productDesc = "";		
 	/**
 	 * construct
 	 * $mode => configura si las operaciones se van a hacer en podo de prueba(Sandbox) o versión en ejecución (Live)
 	 */	
-	public function __construct($mode){
+	public function __construct($mode='0'){
 		$type_s=$this->type[$mode];
 		if($type_s=='sanbox'){
 			$this->api_signature='https://api-3t.sandbox.paypal.com/nvp';
 			$this->api_certificate='https://api-3t.sandbox.paypal.com/nvp';
 			$this->api_websrc="https://www.sandbox.paypal.com/cgi-bin/webscr";
-			$this->signature="A-BcLNC9bi6v6818nfkflo54PVh8Ai6QBbFPRfSb1MZ.zE0meVo3L2rt";
-			$this->api_username="tst.av_1332756963_biz_api1.gmail.com";
-			$this->api_password="1332756990";
+			$this->signature="AYRP3.rCUTDUhKRuQJLWvm0w7PaBAXa.pbLVKqFR9OvU5Jid3som2kF2";
+			$this->api_username="support-facilitator_api1.gobalo.es";
+			$this->api_password="1367998042";
 		}elseif($type_s=='live'){
-			$this->api_signature='https://api.sandbox.paypal.com/nvp';
-			$this->api_certificate='https://api.paypal.com/nvp';
-			$this->signature="";
+			$this->api_signature='https://api-3t.paypal.com/nvp';
+			$this->api_certificate='https://api-3t.paypal.com/nvp';
+			$this->api_websrc="https://www.paypal.com/cgi-bin/webscr";
+			$this->signature="AFcWxV21C7fd0v3bYYYRCpSSRl31AZHSypJEbkNa3OZym-BjzU1rhcVn";
 			$this->api_username="";
 			$this->api_password="";			
 		}else{
@@ -203,6 +214,20 @@ class febe_Seller extends OlimpoBaseSystem{
 		$this->cancelUrl=$url;
 	}
 	/**
+	 * setProductName
+	 * Asigna la url de retorno en caso de cancelación
+	 */			
+	function setProductName($value){
+		$this->productName=$value;
+	}	
+	/**
+	 * setProductDesc
+	 * Asigna la url de retorno en caso de cancelación
+	 */			
+	function setProductDesc($value){
+		$this->productDesc=$value;
+	}		
+	/**
 	 * Fija el precio
 	 * Asigna la url de retorno en caso de cancelación
 	 */				
@@ -228,11 +253,15 @@ class febe_Seller extends OlimpoBaseSystem{
 			    'PWD' => urlencode($this->api_password),
 			    'SIGNATURE' => urlencode($this->signature),
 			    'VERSION' => urlencode($this->pp_v),
-			    'PAYMENTACTION' => urlencode($this->paymentaction),
-				'CURRENCYCODE' => urlencode('EUR'),
+			    'PAYMENTREQUEST_0_PAYMENTACTION' => urlencode($this->paymentaction),
+				'PAYMENTREQUEST_0_CURRENCYCODE' => urlencode('EUR'),
+				'METHOD' => urlencode($this->method),
+				'LOCALECODE' => 'ES',
 				'RM' => urlencode('2'),
-			    'METHOD' => urlencode($this->method),
-			    'AMT' => urlencode($this->amt),
+			    'L_PAYMENTREQUEST_0_NAME0' => ($this->productName),
+				'L_PAYMENTREQUEST_0_DESC0' => ($this->productDesc),
+				'L_PAYMENTREQUEST_0_AMT0' => urlencode($this->amt),
+			    'PAYMENTREQUEST_0_AMT' => urlencode($this->amt),
 			     'RETURNURL' => ($this->returnUrl),
 			    'CANCELURL' => ($this->cancelUrl)
 			);
@@ -262,7 +291,8 @@ class febe_Seller extends OlimpoBaseSystem{
 			$result=$this->sendError($texto_error,WEB_URL);
 			die("[ERROR febe_Seller] No se especificó la url de retorno o de cancelación");			
 		}
-		if(strlen($result['TOKEN'])>0 && $result['ACK']=='Success'){
+		//die($result['TOKEN']." - ".$result['ACK']);
+		if(strlen($result['TOKEN'])>0 && preg_match("/^Success/",$result['ACK'])){
 			$this->ppToken=$result['TOKEN'];
 			$this->assignSessionVar('token', $result['TOKEN']);
 		}else{
@@ -383,7 +413,7 @@ class febe_Seller extends OlimpoBaseSystem{
 	 * doExpressCheckoutPayment
 	 * Cobramo$ la pa$sta!j€j€
 	 */	
-	function doExpressCheckoutPayment($token="",$payerid="",$product){
+	function doExpressCheckoutPayment($token="",$payerid="",$product_price, $orderId){
 		$this->method='DoExpressCheckoutPayment';
 		//$amount=$this->formatNumber($amount);
 		/*
@@ -391,7 +421,7 @@ class febe_Seller extends OlimpoBaseSystem{
 		print_r($result);
 		echo "</pre>";	
 		*/	
-		if(count($product)>0 || strlen($product)>0){
+		if(is_numeric($product_price) && $product_price > 0 && strlen($product_price)>0){
 				$paypal_data = array(
 			    'USER' => urlencode($this->api_username),
 			    'PWD' => urlencode($this->api_password),
@@ -399,7 +429,7 @@ class febe_Seller extends OlimpoBaseSystem{
 			    'VERSION' => urlencode($this->pp_v),
 				'PAYMENTACTION'	=>	'Authorization',
 			    'METHOD' => urlencode($this->method),
-				'AMT' => $product['PRICE'],
+				'AMT' => $product_price,
 				'CURRENCYCODE' => urlencode('EUR'),
 				'TOKEN' => urlencode($token),
 				'PAYERID' => urlencode($payerid)
@@ -440,15 +470,34 @@ class febe_Seller extends OlimpoBaseSystem{
 					die("[ERROR en febe_Seller::".__LINE__."]No existe ninguna ID de usuario");
 				}			
 				$h_db->addIUDTable($this->table_operations);
+				$h_db->setAction('I');
+				$h_db->addIUField('ID', uniqid());
+				$h_db->addIUField('PAYMENT_ID', $result['TRANSACTIONID']);
+				$h_db->addIUField('PAYMENT_DATE', $result['TIMESTAMP']);
+				$h_db->addIUField('PRICE', $result['AMT']);
+				$h_db->addIUField('PAYMENT_STATUS', $result['PAYMENTSTATUS']);
+				$h_db->addIUField('CHECKOUT_STATUS', $result['CHECKOUTSTATUS']);
+				//$h_db->addIUField('CORRELATIONID', $result['CORRELATIONID']);
+				$h_db->addIUField('FK_ORDER', $orderId);
+				$h_db->addIUField('FK_CLIENT', $this->getRequestSessionVar($this->client_session_name));
+				$h_db->addIUField('SESSION_TOKEN', $result['TOKEN']);
+				//$h_db->addIUField('PP_PAYERID', $result['PAYERID']);
+				//$h_db->addIUField('INVOICE_CLIENT_NAME', $result['FIRSTNAME']);
+				//$h_db->addIUField('INVOICE_CLIENT_SURNAME', $result['LASTNAME']);
+				//$h_db->addIUField('INVOICE_CLIENT_COUNTRY', $result['COUNTRYCODE']);
+				//$h_db->addIUField('INVOICE_SHIP_NAME', $result['SHIPTONAME']);
+				
+				/*
 				$h_db->setAction('U');
 				$h_db->addIUField('PAYMENT_ID', $result['TRANSACTIONID']);
 				$h_db->addIUField('PAYMENT_DATE', $result['TIMESTAMP']);
 				$h_db->addIUField('PAYMENT_STATUS', $result['PAYMENTSTATUS']);
 				
 				
-				$h_db->addUDCond('FK_PRODUCT', $product['ID']);
+				$h_db->addUDCond('FK_ORDER', $orderId);
 				$h_db->addUDCond('FK_CLIENT', $this->getRequestSessionVar($this->client_session_name));
 				$h_db->addUDCond('SESSION_TOKEN', $result['TOKEN']);
+				 * */
 				$result=$h_db->executeCommand();			
 			}else{
 				$texto_error="[ERROR febe_Seller::doExpressCheckoutPayment] Error al validar la conexión Paypal: <pre>".print_r($result,true)."</pre> \n<br> Información enviada:<pre>".print_r($paypal_data,true)."</pre>";
@@ -494,7 +543,7 @@ class febe_Seller extends OlimpoBaseSystem{
 				$result=$this->sendError($texto_error,WEB_URL);
 				die("[ERROR febe_Seller] Curl Error: " . curl_errno($this->ch) . ": " . curl_error($this->ch)."");					
 			}		
-			curl_close($this->ch);
+			//curl_close($this->ch);
 			parse_str($result, $result);
 			/* Debug */
 			$this->dbRequest=$result;		

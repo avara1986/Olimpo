@@ -548,6 +548,7 @@ class hidra_DB extends OlimpoBaseSystem{
 			if($results==true){
 				$ok=true;
 			}else{
+				echo $this->h_db->error;
 				$ok=false;
 			}
 		}else{
@@ -805,6 +806,7 @@ class hidra_DB extends OlimpoBaseSystem{
 	public function readCsv($filename="",$delimiter=';',$enclosure='"'){
 		$list_array=array();
 		$row=0;
+		ini_set('auto_detect_line_endings',TRUE);
 		if (($handle = fopen($filename, "r")) !== FALSE) {
 			while (($data = fgetcsv($handle, 0,$delimiter,$enclosure)) !== FALSE) {
 				$num = count($data);
