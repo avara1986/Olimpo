@@ -5,6 +5,8 @@ Olimpo Framework
 ======
 
 Olimpo is a PHP Framework
+
+DON´T USE!! It was my first Framework and it have a lot of bugs
 	
 Create a new repository on the command line
 ===========================================
@@ -15,6 +17,6 @@ Create a new repository on the command line
 	git init
 	git add README.md
 	git commit -m "first commit"
-	git remote add origin https://github.com/avara1986/Olif.git
+	git remote add origin
 	git push -u origin master
 	
