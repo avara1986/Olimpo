@@ -41,10 +41,10 @@ class hermes_Mailer
 		$this->checkTimeMailer("[".get_class($this)."::".__FUNCTION__."::".__LINE__."] Construytendo la clase");
 		*/
 		
-		if(@!defined(MAILER_HOST))@define("MAILER_HOST","smtp.gobalo.com");
+		if(@!defined(MAILER_HOST))@define("MAILER_HOST","smtp.DOMAIN.com");
 		if(@!defined(MAILER_PORT))@define("MAILER_PORT",25);
-		if(@!defined(MAILER_USER))@define("MAILER_USER","test@gobalo.com");
-		if(@!defined(MAILER_PASS))@define("MAILER_PASS","366790");
+		if(@!defined(MAILER_USER))@define("MAILER_USER","test@DOMAIN.com");
+		if(@!defined(MAILER_PASS))@define("MAILER_PASS","******");
 		/*if(!defined(MAILER_HOST))@define("MAILER_HOST","smtp.gobalo.com");
 		if(!defined(MAILER_PORT))@define("MAILER_PORT",25);
 		if(!defined(MAILER_USER))@define("MAILER_USER","test@gobalo.com");
